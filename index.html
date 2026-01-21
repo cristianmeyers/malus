@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur Malus CO2 France 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Eliminar flechas de inputs numéricos */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen font-sans">
+
+    <div class="max-w-xl mx-auto py-10 px-4">
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+            <div class="bg-slate-900 p-8 text-white text-center">
+                <h1 class="text-2xl font-bold uppercase tracking-tight">Simulateur Malus 2026</h1>
+                <p class="text-slate-400 text-sm mt-1 font-medium italic">Taxe sur les véhicules de tourisme</p>
+            </div>
+
+            <div class="p-8 space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest">Émissions CO2
+                        (g/km)</label>
+                    <input type="number" id="co2Input" placeholder="Ex: 154"
+                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 text-2xl font-bold focus:border-blue-500 transition-all outline-none">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-widest">Date de 1ère
+                        immatriculation</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <input type="text" id="manualDate" placeholder="DD/MM/YYYY" maxlength="10"
+                            class="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-4 text-xl focus:border-blue-500 transition-all outline-none font-mono">
+                        <p class="text-[10px] text-gray-400 italic">Saisie manuelle ou automatique (format: JJ/MM/AAAA)
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button onclick="toggleCheckbox('e85Check')" id="btn-e85"
+                        class="flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:bg-gray-50 transition-all group">
+                        <span class="text-sm font-bold text-gray-600">Véhicule Superéthanol E85</span>
+                        <input type="checkbox" id="e85Check" class="hidden">
+                        <div
+                            class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center group-[.active]:bg-green-500 group-[.active]:border-green-500 transition-colors">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                    </button>
+
+                    <button onclick="toggleCheckbox('familyCheck')" id="btn-family"
+                        class="flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 hover:bg-gray-50 transition-all group">
+                        <span class="text-sm font-bold text-gray-600">Famille nombreuse (-90g)</span>
+                        <input type="checkbox" id="familyCheck" class="hidden">
+                        <div
+                            class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center group-[.active]:bg-blue-500 group-[.active]:border-blue-500 transition-colors">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                    </button>
+                </div>
+
+                <div id="resultCard"
+                    class="opacity-0 translate-y-4 transition-all duration-500 bg-blue-600 rounded-3xl p-8 text-white shadow-lg shadow-blue-200">
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs font-bold uppercase tracking-[0.2em] text-blue-200 opacity-80 mb-1">Montant
+                            Estimé</span>
+                        <h2 id="totalPrice" class="text-6xl font-black tracking-tighter mb-4">0 €</h2>
+                        <div class="w-full border-t border-white/20 pt-4 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="opacity-70">Antériorité :</span>
+                                <span id="resMonths" class="font-bold">0 mois</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="opacity-70">Réduction appliquée :</span>
+                                <span id="resDecote" class="font-bold text-blue-200">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const malusTable = {
+            108: 50, 109: 75, 110: 100, 111: 125, 112: 150, 113: 170, 114: 190, 115: 210, 116: 230, 117: 240, 118: 260, 119: 280, 120: 310, 121: 330, 122: 360, 123: 400, 124: 450, 125: 540, 126: 650, 127: 740, 128: 818, 129: 898, 130: 983, 131: 1074, 132: 1172, 133: 1276, 134: 1386, 135: 1504, 136: 1629, 137: 1761, 138: 1901, 139: 2049, 140: 2205, 141: 2370, 142: 2544, 143: 2726, 144: 2918, 145: 3119, 146: 3331, 147: 3552, 148: 3784, 149: 4026, 150: 4279, 151: 4543, 152: 4818, 153: 5105, 154: 5404, 155: 5715, 156: 6126, 157: 6537, 158: 7248, 159: 7959, 160: 8770, 161: 9681, 162: 10692, 163: 11803, 164: 13014, 165: 14325, 166: 15736, 167: 17247, 168: 18858, 169: 20569, 170: 22380, 171: 24291, 172: 26302, 173: 28413, 174: 30624, 175: 32935, 176: 35346, 177: 37857, 178: 40468, 179: 43179, 180: 45990, 181: 48901, 182: 51912, 183: 55023, 184: 58134, 185: 61245, 186: 64356, 187: 67467, 188: 70578, 189: 73689, 190: 76800, 191: 79911
+        };
+
+        const getDecotePerc = (m) => {
+            if (m >= 181) return 100; if (m >= 169) return 94; if (m >= 157) return 88;
+            if (m >= 145) return 82; if (m >= 133) return 76; if (m >= 121) return 70;
+            if (m >= 109) return 64; if (m >= 97) return 58; if (m >= 85) return 53;
+            if (m >= 73) return 48; if (m >= 61) return 43; if (m >= 49) return 38;
+            if (m >= 37) return 33; if (m >= 25) return 28; if (m >= 19) return 20;
+            if (m >= 13) return 16; if (m >= 10) return 12; if (m >= 7) return 9;
+            if (m >= 4) return 6; if (m >= 1) return 3; return 0;
+        };
+
+        const toggleCheckbox = (id) => {
+            const cb = document.getElementById(id);
+            cb.checked = !cb.checked;
+            document.getElementById('btn-' + id.replace('Check', '')).classList.toggle('active', cb.checked);
+            calculate();
+        };
+
+        // Máscara y validación de fecha
+        document.getElementById('manualDate').addEventListener('input', function (e) {
+            let v = this.value.replace(/\D/g, '');
+            if (v.length > 2 && v.length <= 4) v = v.slice(0, 2) + '/' + v.slice(2);
+            else if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4, 8);
+            this.value = v;
+            calculate();
+        });
+
+        const calculate = () => {
+            const co2Raw = parseInt(document.getElementById('co2Input').value);
+            const dateStr = document.getElementById('manualDate').value;
+            const isE85 = document.getElementById('e85Check').checked;
+            const isFamily = document.getElementById('familyCheck').checked;
+
+            // Validar fecha completa DD/MM/YYYY
+            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!co2Raw || !dateRegex.test(dateStr)) {
+                document.getElementById('resultCard').classList.add('opacity-0', 'translate-y-4');
+                return;
+            }
+
+            // Convertir fecha manual a objeto Date
+            const [_, d, m, y] = dateStr.match(dateRegex);
+            const matDate = new Date(y, m - 1, d);
+            const today = new Date(); // 2026
+
+            if (isNaN(matDate.getTime())) return;
+
+            // Meses de antigüedad
+            let months = (today.getFullYear() - matDate.getFullYear()) * 12 + (today.getMonth() - matDate.getMonth());
+            if (today.getDate() < matDate.getDate()) months--;
+            months = Math.max(0, months);
+
+            // Lógica Malus
+            let co2 = co2Raw;
+            if (isE85) co2 = Math.round(co2 * 0.6);
+            if (isFamily) co2 = Math.max(0, co2 - 90);
+
+            let baseTax = 0;
+            if (co2 > 191) baseTax = 80000;
+            else if (co2 >= 108) baseTax = malusTable[co2] || 0;
+
+            const perc = getDecotePerc(months);
+            const total = baseTax * (1 - perc / 100);
+
+            // UI Update
+            document.getElementById('resultCard').classList.remove('opacity-0', 'translate-y-4');
+            document.getElementById('totalPrice').innerText = `${Math.round(total).toLocaleString('fr-FR')} €`;
+            document.getElementById('resMonths').innerText = `${months} mois`;
+            document.getElementById('resDecote').innerText = `${perc}%`;
+        };
+
+        document.getElementById('co2Input').addEventListener('input', calculate);
+    </script>
+</body>
+
+</html>
